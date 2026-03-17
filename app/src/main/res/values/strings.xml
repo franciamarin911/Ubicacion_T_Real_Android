@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Proyecto_Ubi_tiempo_Real_FAMM</string>
+    <string name="mapbox_access_token">pk.eyJ1IjoiZnJhbmNpYW1hcmluOTExIiwiYSI6ImNtbTI3djUzcTA0cHkyc3B6dTNqNWlkenUifQ._GD77tfC9zZdOfEbx8RVMg</string>
+</resources>

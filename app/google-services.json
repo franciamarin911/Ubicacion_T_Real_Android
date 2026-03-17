@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "208548855048",
+    "firebase_url": "https://bd-en-tiempo-real-famm-default-rtdb.firebaseio.com",
+    "project_id": "bd-en-tiempo-real-famm",
+    "storage_bucket": "bd-en-tiempo-real-famm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:208548855048:android:ea4ca67734708dae8c40bd",
+        "android_client_info": {
+          "package_name": "com.example.proyecto_ubi_tiempo_real_famm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAKZAOHvJXsFN8Z0OxV6CGVcSamdEUVolU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
