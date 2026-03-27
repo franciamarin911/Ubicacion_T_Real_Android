@@ -2,7 +2,6 @@ package com.example.proyecto_ubi_tiempo_real_famm
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.os.Bundle
 import android.os.Looper
 import android.widget.Button
@@ -25,12 +24,12 @@ import com.mapbox.maps.plugin.annotation.generated.createCircleAnnotationManager
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private lateinit var locationCallback: LocationCallback
+    private lateinit var clienteUbicacion: FusedLocationProviderClient
+    private lateinit var respuestaUbicacion: LocationCallback
     private lateinit var textoEstado: TextView
     private lateinit var botonRastrear: Button
-    private lateinit var mapView: MapView
-    private var circleAnnotationManager: CircleAnnotationManager? = null
+    private lateinit var vistaMapa: MapView
+    private var gestorAnotacionesCirculares: CircleAnnotationManager? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,46 +37,51 @@ class MainActivity : AppCompatActivity() {
 
         textoEstado = findViewById(R.id.textoEstado)
         botonRastrear = findViewById(R.id.botonRastrear)
-        mapView = findViewById(R.id.mapView)
+        vistaMapa = findViewById(R.id.mapView)
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        clienteUbicacion = LocationServices.getFusedLocationProviderClient(this)
 
-        mapView.mapboxMap.loadStyle(Style.MAPBOX_STREETS)
+        // *** LLAMADA A MAPBOX ***
+        vistaMapa.mapboxMap.loadStyle(Style.MAPBOX_STREETS)
 
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult) {
-                for (location in locationResult.locations){
-                    val latitud = location.latitude
-                    val longitud = location.longitude
-                    //mostrar texto en pantalla
+        respuestaUbicacion = object : LocationCallback() {
+            override fun onLocationResult(resultadoUbicacion: LocationResult) {
+                for (ubicacion in resultadoUbicacion.locations){
+                    val latitud = ubicacion.latitude
+                    val longitud = ubicacion.longitude
+
                     textoEstado.text = "Ubicación:\nLat: $latitud\nLng: $longitud"
-                    //guardamos en firebase
-                    val database = FirebaseDatabase.getInstance()
-                    val miReferencia = database.getReference("ubicacion_actual")
+
+                    // *** LLAMADA A FIREBASE ***
+                    val baseDatos = FirebaseDatabase.getInstance()
+                    val miReferencia = baseDatos.getReference("ubicacion_actual")
                     miReferencia.child("lat").setValue(latitud)
                     miReferencia.child("lng").setValue(longitud)
 
-                    // MARCADOR CIRCULAR (EL PUNTO ROJO)
-                    val point = Point.fromLngLat(longitud, latitud)
+                    // MARCADOR CIRCULAR PARA EL MAPA
+                    val puntoPosicion = Point.fromLngLat(longitud, latitud)
 
-                    if (circleAnnotationManager == null) {
-                        circleAnnotationManager = mapView.annotations.createCircleAnnotationManager()
+                    // *** LLAMADA A MAPBOX PARA EL MARCADOR ***
+                    if (gestorAnotacionesCirculares == null) {
+                        gestorAnotacionesCirculares = vistaMapa.annotations.createCircleAnnotationManager()
                     }
-                    // Borramos el rastro anterior
-                    circleAnnotationManager?.deleteAll()
-                    // Configuramos el círculo rojo
-                    val circleAnnotationOptions = CircleAnnotationOptions()
-                        .withPoint(point)
-                        .withCircleRadius(10.0) // Tamaño del punto
-                        .withCircleColor("#EE4E4E") // Color rojo vibrante
-                        .withCircleStrokeWidth(2.0) // Bordecito
-                        .withCircleStrokeColor("#FFFFFF") // Borde blanco para que resalte
 
-                    circleAnnotationManager?.create(circleAnnotationOptions)
+                    gestorAnotacionesCirculares?.deleteAll()
 
-                    mapView.mapboxMap.setCamera(
+                    // DISEÑO PARA EL PUNTITO ROJO
+                    val opcionesCirculo = CircleAnnotationOptions()
+                        .withPoint(puntoPosicion)
+                        .withCircleRadius(10.0)
+                        .withCircleColor("#EE4E4E")
+                        .withCircleStrokeWidth(2.0)
+                        .withCircleStrokeColor("#FFFFFF")
+
+                    gestorAnotacionesCirculares?.create(opcionesCirculo)
+
+                    // *** LLAMADA A MAPBOX (CAMARA) ***
+                    vistaMapa.mapboxMap.setCamera(
                         CameraOptions.Builder()
-                            .center(point)
+                            .center(puntoPosicion)
                             .zoom(15.0)
                             .build()
                     )
@@ -97,13 +101,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         textoEstado.text = "Buscando satélites..."
-        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000).build()
+        val solicitudUbicacion = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 2000).build()
 
-        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+        // INICIA EL GPS
+        clienteUbicacion.requestLocationUpdates(solicitudUbicacion, respuestaUbicacion, Looper.getMainLooper())
         Toast.makeText(this, "Rastreo iniciado", Toast.LENGTH_SHORT).show()
     }
 
-    override fun onStart() { super.onStart(); mapView.onStart() }
-    override fun onStop() { super.onStop(); mapView.onStop() }
-    override fun onDestroy() { super.onDestroy(); mapView.onDestroy() }
+    override fun onStart() { super.onStart(); vistaMapa.onStart() }
+    override fun onStop() { super.onStop(); vistaMapa.onStop() }
+    override fun onDestroy() { super.onDestroy(); vistaMapa.onDestroy() }
 }
